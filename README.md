@@ -1,10 +1,8 @@
 # Gravitational Wave Sky Localization using Deep Learning
 
-Master's Thesis Project - Deep learning models for gravitational wave source localization from binary black hole merger signals.
-
 ## Overview
 
-This project implements four neural network architectures to localize gravitational wave sources on the sky using strain data from LIGO-Virgo detectors (H1, L1, V1). The models predict the sky position (Right Ascension and Declination) of binary black hole merger events.
+This project implements four neural network architectures to localize gravitational wave sources on the sky using generated strain data from LIGO-Virgo detectors (H1, L1, V1). The models predict the sky position (Right Ascension and Declination) on long bursts.
 
 ### Model Architectures
 
@@ -33,8 +31,8 @@ Each dataset is preprocessed at 3 HEALPix resolutions: **nside=8** (768 pixels),
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/yourusername/gw-skylocalization.git
-cd gw-skylocalization
+git clone https://github.com/Romain2309/TFE.git
+cd TFE
 ```
 
 ### 2. Install dependencies
@@ -100,7 +98,7 @@ gw-skylocalization/
 
 ## Generating Datasets from Scratch
 
-Since the preprocessed datasets are very large (>3TB uncompressed), they are not included in this repository. Follow these steps to regenerate them:
+Since the preprocessed datasets are large, they are not included in this repository. Follow these steps to regenerate them:
 
 ### Prerequisites
 
@@ -108,303 +106,122 @@ You must have **GWpyxel** installed for gravitational wave simulation:
 
 ```bash
 pip install gwpy
-pip install git+https://github.com/AndyC80297/GWpyxel.git
+pip install git+https://https://git.ligo.org/maxime.fays/gwpyxel.git
 ```
 
 ### Step 1: Generate Raw Strain Data
 
-Each dataset type has different generation parameters:
-
-#### Advanced Dataset (~50,000 events)
+Generate event parameters and simulate GW strain data for each dataset type:
 
 ```bash
 cd data_generation
 
-# Generate event parameters (RA, DEC, chirp duration, frequencies, etc.)
+# dataset in [advanced, benchmark_small, benchmark_same_small]
+# n_events: 50000 for advanced, 30000 for others (the values used in this work, it can be others)
+
 python generate_parameters.py \
-    --dataset advanced \
-    --n_events 50000 \
-    --output /data/advanced/parameters.csv
-
-# Simulate all events (this will take several hours/days)
-python generate_dataset.py \
-    --dataset advanced \
-    --n_events 50000 \
-    --output_dir /data/advanced \
-    --n_jobs 4  # Parallel jobs
-```
-
-**Output**: `/data/advanced/` will contain ~150,000 `.npy` files (3 detectors × 50K events)
-
-#### Benchmark Small Dataset (~30,000 events)
-
-```bash
-python generate_parameters.py \
-    --dataset benchmark_small \
-    --n_events 30000 \
-    --output /data/benchmark_small/parameters.csv
+    --dataset <dataset> \
+    --n_events <n_events> \
+    --output /data/<dataset>/parameters.csv
 
 python generate_dataset.py \
-    --dataset benchmark_small \
-    --n_events 30000 \
-    --output_dir /data/benchmark_small \
+    --dataset <dataset> \
+    --n_events <n_events> \
+    --output_dir /data/<dataset> \
     --n_jobs 4
 ```
 
-**Output**: `/data/benchmark_small/` will contain ~90,000 `.npy` files
-
-#### Benchmark Same Small Dataset (~30,000 events)
-
-```bash
-python generate_parameters.py \
-    --dataset benchmark_same_small \
-    --n_events 30000 \
-    --output /data/benchmark_same_small/parameters.csv
-
-python generate_dataset.py \
-    --dataset benchmark_same_small \
-    --n_events 30000 \
-    --output_dir /data/benchmark_same_small \
-    --n_jobs 4
-```
-
-**Output**: `/data/benchmark_same_small/` will contain ~90,000 `.npy` files
-
-**Estimated generation time**:
-- Advanced: ~48-72 hours (highly variable parameters)
-- Benchmark Small: ~24-36 hours
-- Benchmark Same Small: ~24-36 hours
+**Output**: Each dataset directory will contain `.npy` files (3 detectors × n_events)
 
 ### Step 2: Preprocess to HDF5
 
-The raw `.npy` files are slow to load. Convert them to HDF5 format with bandpass filtering and normalization:
+Convert raw `.npy` files to HDF5 format with bandpass filtering and normalization:
 
-#### Preprocess for each HEALPix resolution
-
-You need to preprocess each dataset at 3 different HEALPix resolutions (nside=8, 16, 32):
-
-**Advanced Dataset:**
 ```bash
 cd scripts
 
-# nside=8 (768 sky pixels)
-python preprocess_dataset.py \
-    --input-dir /data/advanced \
-    --output-dir /data/preprocessed/advanced_nside8 \
-    --healpix-nside 8 \
-    --normalize
+# dataset in [advanced, benchmark_small, benchmark_same_small]
+# healpix_nside in [8, 16, 32] (the values used in this work, it can be others)
 
-# nside=16 (3072 sky pixels)
 python preprocess_dataset.py \
-    --input-dir /data/advanced \
-    --output-dir /data/preprocessed/advanced_nside16 \
-    --healpix-nside 16 \
-    --normalize
-
-# nside=32 (12288 sky pixels)
-python preprocess_dataset.py \
-    --input-dir /data/advanced \
-    --output-dir /data/preprocessed/advanced_nside32 \
-    --healpix-nside 32 \
-    --normalize
+    --input-dir /data/<dataset> \
+    --output-dir /data/preprocessed/<dataset>_nside<healpix_nside> \
+    --healpix-nside <healpix_nside> \
+    --normalize \
+    --bandpass-low 30 \
+    --bandpass-high 1024 \
+    --target-length 2048
 ```
 
-**Benchmark Small:**
-```bash
-python preprocess_dataset.py \
-    --input-dir /data/benchmark_small \
-    --output-dir /data/preprocessed/benchmark_small_nside8 \
-    --healpix-nside 8 \
-    --normalize
-
-python preprocess_dataset.py \
-    --input-dir /data/benchmark_small \
-    --output-dir /data/preprocessed/benchmark_small_nside16 \
-    --healpix-nside 16 \
-    --normalize
-
-python preprocess_dataset.py \
-    --input-dir /data/benchmark_small \
-    --output-dir /data/preprocessed/benchmark_small_nside32 \
-    --healpix-nside 32 \
-    --normalize
-```
-
-**Benchmark Same Small:**
-```bash
-python preprocess_dataset.py \
-    --input-dir /data/benchmark_same_small \
-    --output-dir /data/preprocessed/benchmark_same_small_nside8 \
-    --healpix-nside 8 \
-    --normalize
-
-python preprocess_dataset.py \
-    --input-dir /data/benchmark_same_small \
-    --output-dir /data/preprocessed/benchmark_same_small_nside16 \
-    --healpix-nside 16 \
-    --normalize
-
-python preprocess_dataset.py \
-    --input-dir /data/benchmark_same_small \
-    --output-dir /data/preprocessed/benchmark_same_small_nside32 \
-    --healpix-nside 32 \
-    --normalize
-```
-
-**Output**: Each preprocessing creates a `preprocessed_data.h5` file (~700MB-1.2GB each)
-
-**Preprocessing options**:
-- `--normalize`: Normalize strain data (recommended, set to False for benchmark_same_small nside8)
-- `--bandpass-low 30 --bandpass-high 1024`: Frequency range in Hz
-- `--target-length 2048`: Time series length
+**Output**: Each preprocessing creates a `preprocessed_data.h5` file in the output directory
 
 ### Step 3: File Organization
 
-After preprocessing, organize your data directory like this:
+After preprocessing, the expected directory structure is:
 
 ```
-/data/
-├── preprocessed/
-│   ├── advanced_nside8/preprocessed_data.h5
-│   ├── advanced_nside16/preprocessed_data.h5
-│   ├── advanced_nside32/preprocessed_data.h5
-│   ├── benchmark_small_nside8/preprocessed_data.h5
-│   ├── benchmark_small_nside16/preprocessed_data.h5
-│   ├── benchmark_small_nside32/preprocessed_data.h5
-│   ├── benchmark_same_small_nside8/preprocessed_data.h5
-│   ├── benchmark_same_small_nside16/preprocessed_data.h5
-│   └── benchmark_same_small_nside32/preprocessed_data.h5
-└── [raw .npy files can be archived or deleted after preprocessing]
+/data/preprocessed/
+├── <dataset>_nside<healpix_nside>/preprocessed_data.h5
+└── ... (9 total: 3 datasets × 3 nsides)
 ```
 
-**Disk space requirements**:
-- Raw .npy files: ~3TB total (can be deleted after preprocessing)
-- Preprocessed .h5 files: ~7-8GB total
+Raw `.npy` files can be archived or deleted after preprocessing.
 
 ## Training Models
-
-### Quick Start
-
-Train a single model:
 
 ```bash
 cd scripts
 
+# model in [regressor, classifier, multitask, probmap]
+# dataset in [advanced, benchmark_small, benchmark_same_small]
+# healpix_nside in [8, 16, 32] (the values used in this work, it can be others)
+
 python train.py \
-    --model regressor \
-    --data-path /data/preprocessed/benchmark_small_nside16/preprocessed_data.h5 \
-    --nside 16 \
+    --model <model> \
+    --data-path /data/preprocessed/<dataset>_nside<healpix_nside>/preprocessed_data.h5 \
+    --nside <healpix_nside> \
     --epochs 100 \
     --batch-size 32 \
     --lr 1e-4 \
-    --output-dir results/benchmark_small_nside16/regressor
+    --weight-decay 1e-5 \
+    --output-dir results/<dataset>_nside<healpix_nside>/<model>
 ```
 
-### Train All Model Configurations
-
-To reproduce all 36 trained models (4 architectures × 3 datasets × 3 nsides):
-
-```bash
-# Example: Train all 4 models on benchmark_small at nside=16
-for model in regressor classifier multitask probmap; do
-    python train.py \
-        --model $model \
-        --data-path /data/preprocessed/benchmark_small_nside16/preprocessed_data.h5 \
-        --nside 16 \
-        --epochs 100 \
-        --batch-size 32 \
-        --output-dir results/benchmark_small_nside16/$model
-done
-```
-
-**Training parameters**:
-- `--model`: Choose from `regressor`, `classifier`, `multitask`, `probmap`
-- `--nside`: HEALPix resolution (8, 16, or 32)
-- `--batch-size`: Depends on GPU memory (32 for nside=8/16, 16 for nside=32)
-- `--lr`: Learning rate (default 1e-4)
-- `--weight-decay`: L2 regularization (default 1e-5)
-- `--epochs`: Number of training epochs (100-200 recommended)
-
-**Training time** (on NVIDIA A100):
-- Regressor/Classifier: ~2-4 hours per model
-- MultiTask: ~4-6 hours
-- ProbabilityMap: ~6-10 hours (largest output)
+To train all 36 models (4 architectures × 3 datasets × 3 nsides), iterate over the parameters.
 
 ## Evaluating Models
 
-### Evaluate a single model
+### Evaluate a model
 
 ```bash
 python evaluate.py \
-    --model regressor \
-    --checkpoint results/benchmark_small_nside16/regressor/best_model.pt \
-    --data-path /data/preprocessed/benchmark_small_nside16/preprocessed_data.h5 \
-    --nside 16 \
-    --output-dir results/benchmark_small_nside16/regressor/evaluation
+    --model <model> \
+    --checkpoint results/<dataset>_nside<healpix_nside>/<model>/best_model.pt \
+    --data-path /data/preprocessed/<dataset>_nside<healpix_nside>/preprocessed_data.h5 \
+    --nside <healpix_nside> \
+    --output-dir results/<dataset>_nside<healpix_nside>/<model>/evaluation
 ```
 
-### Compare all models
-
-Generate comparison plots and statistics:
+### Compare models
 
 ```bash
 python compare_models.py \
-    --results-dir results/benchmark_small_nside16 \
-    --output-dir results/benchmark_small_nside16/comparison
+    --results-dir results/<dataset>_nside<healpix_nside> \
+    --output-dir results/<dataset>_nside<healpix_nside>/comparison
 ```
 
-**Metrics computed**:
-- **Angular error**: Great circle distance between predicted and true position
-- **Searched area**: Sky area needed to find true source (for ProbabilityMap)
-- **Credible regions**: 50% and 90% credible areas
-- **Pixel accuracy**: Classification accuracy (for Classifier)
-- **Time delay error**: Prediction accuracy for detector time delays (for MultiTask)
+**Metrics**: Angular error, searched area, credible regions, pixel accuracy, time delay error
 
 ## Results
 
-The `results/` directory contains all 36 trained models with their evaluation metrics:
+The `results/` directory contains all 36 trained models:
 
 ```
-results/
-├── advanced/
-│   ├── nside8/  {regressor, classifier, multitask, probmap}
-│   ├── nside16/ {regressor, classifier, multitask, probmap}
-│   └── nside32/ {regressor, classifier, multitask, probmap}
-├── benchmark_small/
-│   ├── nside8/  {regressor, classifier, multitask, probmap}
-│   ├── nside16/ {regressor, classifier, multitask, probmap}
-│   └── nside32/ {regressor, classifier, multitask, probmap}
-└── benchmark_same_small/
-    ├── nside8/  {regressor, classifier, multitask, probmap}
-    ├── nside16/ {regressor, classifier, multitask, probmap}
-    └── nside32/ {regressor, classifier, multitask, probmap}
+results/<dataset>_nside<healpix_nside>/<model>/
+├── best_model.pt
+├── config.json
+├── training_results_metrics.json
+└── evaluation/
 ```
 
-Each model directory contains:
-- `best_model.pt`: Trained model checkpoint
-- `config.json`: Training configuration
-- `training_results_metrics.json`: Training metrics
-- `evaluation/`: Evaluation results and plots
-
-## Citation
-
-If you use this code in your research, please cite:
-
-```bibtex
-@mastersthesis{gwskylocalization2026,
-  title={Deep Learning for Gravitational Wave Sky Localization},
-  author={Your Name},
-  year={2026},
-  school={Your University}
-}
-```
-
-## License
-
-This project is licensed under the MIT License.
-
-## Acknowledgments
-
-- LIGO-Virgo Collaboration for gravitational wave data
-- GWpyxel library for gravitational wave simulation
-- HEALPix for sky discretization scheme
+**Structure**: 4 model architectures × 3 datasets × 3 HEALPix resolutions = 36 configurations
