@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 
-
 import argparse
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
-
 import torch
 import numpy as np
 import matplotlib
@@ -26,7 +24,6 @@ except ImportError:
     sys.exit(1)
 
 def load_model(model_path, device='cuda'):
-
     checkpoint = torch.load(model_path, map_location=device)
 
     if 'config' in checkpoint:
@@ -70,7 +67,6 @@ def load_model(model_path, device='cuda'):
     return model, model_type, n_pixels
 
 def evaluate_probmap(model, test_loader, device='cuda', max_samples=None, nside=8):
-
     all_probs = []
     all_true_pixels = []
     all_true_xyz = []
@@ -105,7 +101,6 @@ def evaluate_probmap(model, test_loader, device='cuda', max_samples=None, nside=
     }
 
 def evaluate_regressor(model, test_loader, device='cuda', max_samples=None):
-
     all_predictions = []
     all_targets = []
 
@@ -138,7 +133,6 @@ def evaluate_regressor(model, test_loader, device='cuda', max_samples=None):
 
 def plot_probability_skymap(probs, nside, true_ra, true_dec, output_path, title=None,
                             show_contours=True, smoothing_fwhm_deg=2.0):
-
     if smoothing_fwhm_deg > 0:
         probs_plot = hp.smoothing(probs, fwhm=np.radians(smoothing_fwhm_deg))
         probs_plot = np.maximum(probs_plot, 0)
@@ -162,17 +156,7 @@ def plot_probability_skymap(probs, nside, true_ra, true_dec, output_path, title=
 
     fig = plt.figure(figsize=(14, 8))
 
-    hp.mollview(
-        probs_plot,
-        title='',
-        cmap='hot',
-        hold=True,
-        fig=fig.number,
-        xsize=2000,
-        min=0,
-        max=probs_plot.max() * 0.9,
-        unit='Probability',
-    )
+    hp.mollview(probs_plot, title='', cmap='hot', hold=True, fig=fig.number, xsize=2000, min=0, max=probs_plot.max() * 0.9, unit='Probability')
 
     if show_contours and probs_plot.sum() > 0:
         sorted_idx = np.argsort(probs_plot)[::-1]
@@ -191,29 +175,8 @@ def plot_probability_skymap(probs, nside, true_ra, true_dec, output_path, title=
             except Exception:
                 pass
 
-    hp.projscatter(
-        true_ra, true_dec,
-        lonlat=True,
-        marker='*',
-        c='white',
-        s=400,
-        edgecolors='black',
-        linewidths=2,
-        zorder=10,
-        label='True position'
-    )
-
-    hp.projscatter(
-        pred_ra, pred_dec,
-        lonlat=True,
-        marker='+',
-        c='red',
-        s=300,
-        linewidths=3,
-        zorder=10,
-        label='Max probability'
-    )
-
+    hp.projscatter(true_ra, true_dec, lonlat=True, marker='*', c='white', s=400, edgecolors='black', linewidths=2, zorder=10, label='True position')
+    hp.projscatter(pred_ra, pred_dec, lonlat=True, marker='+', c='red', s=300, linewidths=3, zorder=10, label='Max probability')
     hp.graticule(dpar=30, dmer=30, alpha=0.4, color='gray')
 
     if title:
@@ -226,7 +189,6 @@ def plot_probability_skymap(probs, nside, true_ra, true_dec, output_path, title=
     plt.close()
 
 def plot_skymap_with_zoom(probs, nside, true_ra, true_dec, output_path):
-
     probs_plot = hp.smoothing(probs, fwhm=np.radians(2.0))
     probs_plot = np.maximum(probs_plot, 0)
     if probs_plot.sum() > 0:
@@ -239,36 +201,14 @@ def plot_skymap_with_zoom(probs, nside, true_ra, true_dec, output_path):
 
     fig = plt.figure(figsize=(18, 7))
 
-    hp.mollview(
-        probs_plot,
-        title='Full Sky Probability Map',
-        cmap='hot',
-        hold=True,
-        sub=(1, 2, 1),
-        xsize=1500,
-        min=0,
-        max=probs_plot.max() * 0.9,
-    )
-    hp.projscatter(true_ra, true_dec, lonlat=True, marker='*',
-                   c='white', s=300, edgecolors='black', linewidths=1.5)
+    hp.mollview(probs_plot, title='Full Sky Probability Map', cmap='hot', hold=True, sub=(1, 2, 1), xsize=1500, min=0, max=probs_plot.max() * 0.9)
+    hp.projscatter(true_ra, true_dec, lonlat=True, marker='*', c='white', s=300, edgecolors='black', linewidths=1.5)
     hp.graticule(dpar=30, dmer=30, alpha=0.3)
 
-    hp.gnomview(
-        probs_plot,
-        rot=(true_ra, true_dec, 0),
-        reso=1.5,
-        xsize=600,
-        title='Zoomed View (centered on true position)',
-        cmap='hot',
-        hold=True,
-        sub=(1, 2, 2),
-        min=0,
-        max=probs_plot.max() * 0.9,
-    )
-    hp.projscatter(true_ra, true_dec, lonlat=True, marker='*',
-                   c='white', s=400, edgecolors='black', linewidths=2)
-    hp.projscatter(pred_ra, pred_dec, lonlat=True, marker='+',
-                   c='red', s=300, linewidths=3)
+    hp.gnomview(probs_plot, rot=(true_ra, true_dec, 0), reso=1.5, xsize=600, title='Zoomed View (centered on true position)',
+                cmap='hot', hold=True, sub=(1, 2, 2), min=0, max=probs_plot.max() * 0.9)
+    hp.projscatter(true_ra, true_dec, lonlat=True, marker='*', c='white', s=400, edgecolors='black', linewidths=2)
+    hp.projscatter(pred_ra, pred_dec, lonlat=True, marker='+', c='red', s=300, linewidths=3)
     hp.graticule(dpar=10, dmer=10, alpha=0.3)
 
     plt.tight_layout()
@@ -276,7 +216,6 @@ def plot_skymap_with_zoom(probs, nside, true_ra, true_dec, output_path):
     plt.close()
 
 def compute_skymap_metrics(probs, true_pixels, nside):
-
     n_samples = len(probs)
 
     searched_areas = []
@@ -306,7 +245,6 @@ def compute_skymap_metrics(probs, true_pixels, nside):
     }
 
 def plot_searched_area_histogram(searched_areas, output_path, credible_level=90):
-
     fig, ax = plt.subplots(figsize=(12, 7))
 
     ax.hist(searched_areas, bins=50, edgecolor='black', alpha=0.7, color='steelblue')
@@ -314,11 +252,8 @@ def plot_searched_area_histogram(searched_areas, output_path, credible_level=90)
     median = np.median(searched_areas)
     mean = np.mean(searched_areas)
 
-    ax.axvline(median, color='red', linestyle='--', linewidth=2,
-               label=f'Median: {median:.1f} deg²')
-    ax.axvline(mean, color='green', linestyle=':', linewidth=2,
-               label=f'Mean: {mean:.1f} deg²')
-
+    ax.axvline(median, color='red', linestyle='--', linewidth=2, label=f'Median: {median:.1f} deg²')
+    ax.axvline(mean, color='green', linestyle=':', linewidth=2, label=f'Mean: {mean:.1f} deg²')
     ax.set_xlabel('Searched Area (deg²)', fontsize=12)
     ax.set_ylabel('Count', fontsize=12)
     ax.set_title(f'{credible_level}% Credible Region Searched Area Distribution',
@@ -332,16 +267,11 @@ def plot_searched_area_histogram(searched_areas, output_path, credible_level=90)
 
 def main():
     parser = argparse.ArgumentParser(description='Evaluate with sky maps')
-    parser.add_argument('--model-path', type=str, required=True,
-                        help='Path to model checkpoint')
-    parser.add_argument('--hdf5-path', type=str, required=True,
-                        help='Path to HDF5 dataset')
-    parser.add_argument('--output-dir', type=str, default='evaluation_skymaps',
-                        help='Output directory')
-    parser.add_argument('--n-samples', type=int, default=None,
-                        help='Number of test samples to evaluate')
-    parser.add_argument('--n-skymap-samples', type=int, default=10,
-                        help='Number of individual sky maps to generate')
+    parser.add_argument('--model-path', type=str, required=True, help='Path to model checkpoint')
+    parser.add_argument('--hdf5-path', type=str, required=True, help='Path to HDF5 dataset')
+    parser.add_argument('--output-dir', type=str, default='evaluation_skymaps', help='Output directory')
+    parser.add_argument('--n-samples', type=int, default=None, help='Number of test samples to evaluate')
+    parser.add_argument('--n-skymap-samples', type=int, default=10, help='Number of individual sky maps to generate')
     parser.add_argument('--batch-size', type=int, default=32)
     parser.add_argument('--device', type=str, default='cuda')
 
@@ -353,11 +283,7 @@ def main():
     device = torch.device(args.device if torch.cuda.is_available() else 'cpu')
     model, model_type, n_pixels = load_model(args.model_path, device)
 
-    _, _, test_loader = create_hdf5_dataloaders(
-        hdf5_path=args.hdf5_path,
-        batch_size=args.batch_size,
-        verbose=True,
-    )
+    _, _, test_loader = create_hdf5_dataloaders(hdf5_path=args.hdf5_path, batch_size=args.batch_size, verbose=True)
 
     nside = int((n_pixels / 12) ** 0.5) if model_type in ['probmap', 'classifier'] else 8
 
@@ -367,29 +293,12 @@ def main():
 
         metrics = compute_skymap_metrics(results['probs'], results['true_pixels'], results['nside'])
 
-        np.savez(
-            output_dir / 'skymap_metrics.npz',
-            searched_areas=metrics['searched_areas'],
-            credible_area_50=metrics['credible_area_50'],
-            credible_area_90=metrics['credible_area_90'],
-            angular_errors=metrics['angular_errors'],
-        )
+        np.savez(output_dir / 'skymap_metrics.npz',searched_areas=metrics['searched_areas'], credible_area_50=metrics['credible_area_50'], 
+                 credible_area_90=metrics['credible_area_90'], angular_errors=metrics['angular_errors'])
 
-        plot_searched_area_histogram(
-            metrics['searched_areas'],
-            output_dir / 'searched_area_histogram.pdf',
-            credible_level='actual'
-        )
-        plot_searched_area_histogram(
-            metrics['credible_area_50'],
-            output_dir / 'credible_area_50_histogram.pdf',
-            credible_level=50
-        )
-        plot_searched_area_histogram(
-            metrics['credible_area_90'],
-            output_dir / 'credible_area_90_histogram.pdf',
-            credible_level=90
-        )
+        plot_searched_area_histogram(metrics['searched_areas'], output_dir / 'searched_area_histogram.pdf', credible_level='actual')
+        plot_searched_area_histogram(metrics['credible_area_50'], output_dir / 'credible_area_50_histogram.pdf', credible_level=50)
+        plot_searched_area_histogram(metrics['credible_area_90'], output_dir / 'credible_area_90_histogram.pdf', credible_level=90)
 
         n_show = min(args.n_skymap_samples, len(results['probs']))
 
@@ -398,23 +307,11 @@ def main():
             true_ra = np.degrees(true_phi)
             true_dec = 90 - np.degrees(true_theta)
 
-            plot_probability_skymap(
-                results['probs'][i],
-                results['nside'],
-                true_ra, true_dec,
-                output_dir / f'skymap_{i:03d}.pdf',
-                title=f'Sample {i}',
-            )
+            plot_probability_skymap(results['probs'][i], results['nside'], true_ra, true_dec, output_dir / f'skymap_{i:03d}.pdf', title=f'Sample {i}')
 
-            plot_skymap_with_zoom(
-                results['probs'][i],
-                results['nside'],
-                true_ra, true_dec,
-                output_dir / f'skymap_zoom_{i:03d}.pdf',
-            )
+            plot_skymap_with_zoom(results['probs'][i], results['nside'], true_ra, true_dec, output_dir / f'skymap_zoom_{i:03d}.pdf')
 
     else:
-
         results = evaluate_regressor(model, test_loader, device, args.n_samples)
 
 if __name__ == '__main__':

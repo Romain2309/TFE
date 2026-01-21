@@ -1,17 +1,12 @@
 #!/usr/bin/env python3
-"""
-Create comprehensive analysis plots for thesis results.
-Compares models across datasets and parameters (nside).
-"""
 
 import json
 import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
 import matplotlib
-matplotlib.use('Agg')  # Non-interactive backend
+matplotlib.use('Agg')
 
-# LaTeX style configuration
 plt.rcParams.update({
     'text.usetex': True,
     'font.family': 'serif',
@@ -25,11 +20,6 @@ plt.rcParams.update({
 })
 
 def collect_all_metrics(results_dir):
-    """
-    Collect metrics from all training runs.
-
-    Returns dict: {dataset: {nside: {model: metrics}}}
-    """
     results_dir = Path(results_dir)
     all_metrics = {}
 
@@ -54,12 +44,10 @@ def collect_all_metrics(results_dir):
                 if not model_dir.exists():
                     continue
 
-                # Find the most recent training run
                 training_runs = [d for d in model_dir.iterdir() if d.is_dir()]
                 if not training_runs:
                     continue
 
-                # Get the most recent (last alphabetically due to timestamp)
                 latest_run = sorted(training_runs)[-1]
                 metrics_file = latest_run / 'training_results_metrics.json'
 
@@ -70,12 +58,7 @@ def collect_all_metrics(results_dir):
 
     return all_metrics
 
-
 def plot_model_comparison_by_dataset_nside(all_metrics, output_dir):
-    """
-    Create comparison plots for each dataset/nside combination.
-    Shows all 4 models side-by-side.
-    """
     output_dir = Path(output_dir)
     output_dir.mkdir(exist_ok=True, parents=True)
 
@@ -110,7 +93,6 @@ def plot_model_comparison_by_dataset_nside(all_metrics, output_dir):
             if nside not in all_metrics[dataset]:
                 continue
 
-            # Create figure with 3 subplots
             fig, axes = plt.subplots(1, 3, figsize=(12, 4))
             fig.suptitle(f'{dataset_labels[dataset]} - nside={nside}', y=1.02)
 
@@ -143,7 +125,6 @@ def plot_model_comparison_by_dataset_nside(all_metrics, output_dir):
                     ax.set_xticklabels(model_names, rotation=0)
                     ax.grid(axis='y', alpha=0.3, linestyle='--')
 
-                    # Add value labels on bars
                     for bar in bars:
                         height = bar.get_height()
                         ax.text(bar.get_x() + bar.get_width()/2., height,
@@ -156,11 +137,7 @@ def plot_model_comparison_by_dataset_nside(all_metrics, output_dir):
             plt.close()
             print(f'Created: {output_file}')
 
-
 def plot_nside_impact(all_metrics, output_dir):
-    """
-    Plot how performance changes with nside for each model.
-    """
     output_dir = Path(output_dir)
     output_dir.mkdir(exist_ok=True, parents=True)
 
@@ -195,12 +172,10 @@ def plot_nside_impact(all_metrics, output_dir):
 
     nsides = [8, 16, 32]
 
-    # Create one plot per dataset
     for dataset in datasets:
         if dataset not in all_metrics:
             continue
 
-        # Create figure with 3 subplots
         fig, axes = plt.subplots(1, 3, figsize=(14, 4))
         fig.suptitle(f'{dataset_labels[dataset]} - Performance vs Resolution', y=1.02)
 
@@ -244,11 +219,7 @@ def plot_nside_impact(all_metrics, output_dir):
         plt.close()
         print(f'Created: {output_file}')
 
-
 def plot_dataset_comparison(all_metrics, output_dir):
-    """
-    Compare performance across datasets for each model at fixed nside.
-    """
     output_dir = Path(output_dir)
     output_dir.mkdir(exist_ok=True, parents=True)
 
@@ -267,16 +238,13 @@ def plot_dataset_comparison(all_metrics, output_dir):
         'probmap': r'Prob. Map'
     }
 
-    # Use nside=16 as reference
     nside = 16
-
     colors = {
         'benchmark_small': '#1f77b4',
         'benchmark_same_small': '#ff7f0e',
         'advanced': '#2ca02c'
     }
 
-    # Create figure with 4 subplots (one per model)
     fig, axes = plt.subplots(2, 2, figsize=(12, 10))
     fig.suptitle(f'Dataset Comparison - nside={nside}', y=0.995)
     axes = axes.flatten()
@@ -304,7 +272,6 @@ def plot_dataset_comparison(all_metrics, output_dir):
                                  edgecolor='black',
                                  linewidth=0.8)
 
-                    # Add value labels
                     for bar in bars:
                         height = bar.get_height()
                         ax.text(bar.get_x() + bar.get_width()/2., height,
@@ -324,11 +291,7 @@ def plot_dataset_comparison(all_metrics, output_dir):
     plt.close()
     print(f'Created: {output_file}')
 
-
 def plot_overall_performance_heatmap(all_metrics, output_dir):
-    """
-    Create heatmaps showing median error for all combinations.
-    """
     output_dir = Path(output_dir)
     output_dir.mkdir(exist_ok=True, parents=True)
 
@@ -348,11 +311,9 @@ def plot_overall_performance_heatmap(all_metrics, output_dir):
         'probmap': r'Prob. Map'
     }
 
-    # Create one heatmap per model
     for model in models:
         fig, ax = plt.subplots(figsize=(8, 5))
 
-        # Create matrix: rows = datasets, cols = nsides
         data_matrix = np.zeros((len(datasets), len(nsides)))
 
         for i, dataset in enumerate(datasets):
@@ -366,20 +327,16 @@ def plot_overall_performance_heatmap(all_metrics, output_dir):
                 else:
                     data_matrix[i, j] = np.nan
 
-        # Create heatmap
         im = ax.imshow(data_matrix, cmap='YlOrRd', aspect='auto')
 
-        # Set ticks and labels
         ax.set_xticks(np.arange(len(nsides)))
         ax.set_yticks(np.arange(len(datasets)))
         ax.set_xticklabels([f'nside={n}' for n in nsides])
         ax.set_yticklabels([dataset_labels[d] for d in datasets])
 
-        # Add colorbar
         cbar = plt.colorbar(im, ax=ax)
         cbar.set_label(r'Median Error ($^\circ$)', rotation=270, labelpad=20)
 
-        # Add text annotations
         for i in range(len(datasets)):
             for j in range(len(nsides)):
                 if not np.isnan(data_matrix[i, j]):
@@ -394,50 +351,16 @@ def plot_overall_performance_heatmap(all_metrics, output_dir):
         plt.close()
         print(f'Created: {output_file}')
 
-
 def main():
-    # Paths
     base_dir = Path(__file__).parent.parent
     results_dir = base_dir / 'results'
     output_dir = base_dir / 'Analysis_Plots'
 
-    print('=' * 70)
-    print('Creating comprehensive analysis plots')
-    print('=' * 70)
-    print()
-
-    # Collect all metrics
-    print('Collecting metrics from all training runs...')
     all_metrics = collect_all_metrics(results_dir)
-
-    # Count configurations
-    total_configs = 0
-    for dataset in all_metrics.values():
-        for nside_dict in dataset.values():
-            total_configs += len(nside_dict)
-    print(f'Found metrics for {total_configs} configurations')
-    print()
-
-    # Create all plots
-    print('Creating model comparison plots (by dataset/nside)...')
     plot_model_comparison_by_dataset_nside(all_metrics, output_dir)
-    print()
-
-    print('Creating nside impact plots...')
     plot_nside_impact(all_metrics, output_dir)
-    print()
-
-    print('Creating dataset comparison plots...')
     plot_dataset_comparison(all_metrics, output_dir)
-    print()
-
-    print('Creating performance heatmaps...')
     plot_overall_performance_heatmap(all_metrics, output_dir)
-    print()
-
-    print('=' * 70)
-    print(f'All plots created in: {output_dir}')
-    print('=' * 70)
 
 
 if __name__ == '__main__':

@@ -1,27 +1,9 @@
 #!/usr/bin/env python3
-"""
-Training script with CLI interface.
-
-Usage:
-    # Train regressor with default settings
-    python scripts/train.py --model regressor
-
-    # Train with custom config
-    python scripts/train.py --config configs/my_config.json
-
-    # Train with specific data directory
-    python scripts/train.py --model probmap --data-dir /data/stu_bonhomme/tfe/benchmark_same_small
-
-    # Override specific parameters
-    python scripts/train.py --model multitask --batch-size 64 --learning-rate 5e-4 --n-epochs 100
-"""
 
 import argparse
 import sys
 import torch
 from pathlib import Path
-
-# Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from gw_skylocalization.training.config import TrainingConfig
@@ -33,199 +15,36 @@ from gw_skylocalization.utils.io import save_results
 
 
 def parse_args():
-    """Parse command-line arguments."""
-    parser = argparse.ArgumentParser(
-        description='Train gravitational wave sky localization models',
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
-    )
-
-    # Configuration
-    parser.add_argument(
-        '--config',
-        type=str,
-        default=None,
-        help='Path to JSON config file (overrides other arguments)'
-    )
-
-    # Model selection
-    parser.add_argument(
-        '--model',
-        type=str,
-        default='regressor',
-        choices=['classifier', 'regressor', 'multitask', 'probmap'],
-        help='Model type to train'
-    )
-
-    # Data configuration
-    parser.add_argument(
-        '--data-dir',
-        type=str,
-        default='/data/stu_bonhomme/tfe/benchmark_same_small',
-        help='Path to data directory (for .npy files)'
-    )
-    parser.add_argument(
-        '--hdf5-path',
-        type=str,
-        default=None,
-        help='Path to preprocessed HDF5 file (faster! Use scripts/preprocess_dataset.py to create)'
-    )
-    parser.add_argument(
-        '--in-memory',
-        action='store_true',
-        help='Load HDF5 dataset into RAM (requires ~15-20GB for 30K events)'
-    )
-    parser.add_argument(
-        '--max-events',
-        type=int,
-        default=None,
-        help='Maximum number of events to use (None = use all)'
-    )
-    parser.add_argument(
-        '--train-frac',
-        type=float,
-        default=0.7,
-        help='Fraction of data for training'
-    )
-    parser.add_argument(
-        '--val-frac',
-        type=float,
-        default=0.15,
-        help='Fraction of data for validation'
-    )
-
-    # Training hyperparameters
-    parser.add_argument(
-        '--batch-size',
-        type=int,
-        default=32,
-        help='Batch size'
-    )
-    parser.add_argument(
-        '--n-epochs',
-        type=int,
-        default=50,
-        help='Number of epochs'
-    )
-    parser.add_argument(
-        '--learning-rate',
-        type=float,
-        default=1e-3,
-        help='Learning rate'
-    )
-    parser.add_argument(
-        '--weight-decay',
-        type=float,
-        default=1e-4,
-        help='Weight decay'
-    )
-
-    # Model features
-    parser.add_argument(
-        '--no-physics-features',
-        action='store_true',
-        help='Disable physics features (use only raw strains)'
-    )
-    parser.add_argument(
-        '--healpix-nside',
-        type=int,
-        default=8,
-        help='HEALPix nside for classifier/probmap'
-    )
-
-    # Optimization
-    parser.add_argument(
-        '--optimizer',
-        type=str,
-        default='adamw',
-        choices=['adam', 'adamw', 'sgd'],
-        help='Optimizer'
-    )
-    parser.add_argument(
-        '--scheduler',
-        type=str,
-        default='plateau',
-        choices=['plateau', 'cosine', 'step', 'onecycle', 'none'],
-        help='Learning rate scheduler'
-    )
-
-    # Early stopping
-    parser.add_argument(
-        '--no-early-stopping',
-        action='store_true',
-        help='Disable early stopping'
-    )
-    parser.add_argument(
-        '--patience',
-        type=int,
-        default=15,
-        help='Early stopping patience'
-    )
-
-    # Output
-    parser.add_argument(
-        '--output-dir',
-        type=str,
-        default='results',
-        help='Output directory for results'
-    )
-    parser.add_argument(
-        '--experiment-name',
-        type=str,
-        default=None,
-        help='Experiment name (auto-generated if not provided)'
-    )
-
-    # Logging
-    parser.add_argument(
-        '--no-tensorboard',
-        action='store_true',
-        help='Disable TensorBoard logging'
-    )
-    parser.add_argument(
-        '--verbose',
-        action='store_true',
-        default=True,
-        help='Verbose output'
-    )
-
-    # Device
-    parser.add_argument(
-        '--device',
-        type=str,
-        default='auto',
-        choices=['auto', 'cuda', 'cpu'],
-        help='Device to use'
-    )
-
-    # Reproducibility
-    parser.add_argument(
-        '--seed',
-        type=int,
-        default=42,
-        help='Random seed'
-    )
-
-    # Resume training
-    parser.add_argument(
-        '--resume',
-        type=str,
-        default=None,
-        help='Path to checkpoint to resume from'
-    )
+    parser = argparse.ArgumentParser(description='Train gravitational wave sky localization models', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--config', type=str, default=None, help='Path to JSON config file (overrides other arguments)')
+    parser.add_argument('--model', type=str, default='regressor', choices=['classifier', 'regressor', 'multitask', 'probmap'], help='Model type to train')
+    parser.add_argument('--data-dir', type=str, default='/data/stu_bonhomme/tfe/benchmark_same_small', help='Path to data directory (for .npy files)')
+    parser.add_argument('--hdf5-path', type=str, default=None, help='Path to preprocessed HDF5 file (faster! Use scripts/preprocess_dataset.py to create)')
+    parser.add_argument('--in-memory', action='store_true', help='Load HDF5 dataset into RAM (requires ~15-20GB for 30K events)')
+    parser.add_argument('--max-events', type=int, default=None, help='Maximum number of events to use (None = use all)')
+    parser.add_argument('--train-frac', type=float, default=0.7, help='Fraction of data for training')
+    parser.add_argument('--val-frac', type=float, default=0.15, help='Fraction of data for validation')
+    parser.add_argument('--batch-size', type=int, default=32, help='Batch size')
+    parser.add_argument('--n-epochs', type=int, default=50, help='Number of epochs')
+    parser.add_argument('--learning-rate', type=float, default=1e-3, help='Learning rate')
+    parser.add_argument('--weight-decay', type=float, default=1e-4, help='Weight decay')
+    parser.add_argument('--no-physics-features', action='store_true', help='Disable physics features (use only raw strains)')
+    parser.add_argument('--healpix-nside', type=int, default=8, help='HEALPix nside for classifier/probmap')
+    parser.add_argument('--optimizer', type=str, default='adamw', choices=['adam', 'adamw', 'sgd'], help='Optimizer')
+    parser.add_argument('--scheduler', type=str, default='plateau', choices=['plateau', 'cosine', 'step', 'onecycle', 'none'], help='Learning rate scheduler')
+    parser.add_argument('--no-early-stopping', action='store_true', help='Disable early stopping')
+    parser.add_argument('--patience', type=int, default=15, help='Early stopping patience')
+    parser.add_argument('--output-dir', type=str, default='results', help='Output directory for results')
+    parser.add_argument('--experiment-name', type=str, default=None, help='Experiment name (auto-generated if not provided)')
+    parser.add_argument('--no-tensorboard', action='store_true', help='Disable TensorBoard logging')
+    parser.add_argument('--verbose', action='store_true', default=True, help='Verbose output')
+    parser.add_argument('--device', type=str, default='auto', choices=['auto', 'cuda', 'cpu'], help='Device to use')
+    parser.add_argument('--seed', type=int, default=42, help='Random seed')
+    parser.add_argument('--resume', type=str, default=None, help='Path to checkpoint to resume from')
 
     return parser.parse_args()
 
-
 def create_model(config: TrainingConfig):
-    """
-    Create model based on configuration.
-
-    Args:
-        config: Training configuration
-
-    Returns:
-        PyTorch model
-    """
     model_kwargs = {
         'use_physics_features': config.use_physics_features,
         'strain_feature_dim': config.strain_feature_dim,
@@ -233,19 +52,13 @@ def create_model(config: TrainingConfig):
     }
 
     if config.model_type == 'classifier':
-        model = SkyClassifier(
-            n_pixels=config.n_pixels,
-            **model_kwargs
-        )
+        model = SkyClassifier(n_pixels=config.n_pixels, **model_kwargs)
     elif config.model_type == 'regressor':
         model = SkyRegressor(**model_kwargs)
     elif config.model_type == 'multitask':
         model = SkyMultiTask(**model_kwargs)
     elif config.model_type == 'probmap':
-        model = SkyProbabilityMap(
-            n_pixels=config.n_pixels,
-            **model_kwargs
-        )
+        model = SkyProbabilityMap(n_pixels=config.n_pixels, **model_kwargs)
     else:
         raise ValueError(f"Unknown model_type: {config.model_type}")
 
@@ -253,15 +66,11 @@ def create_model(config: TrainingConfig):
 
 
 def main():
-    """Main training function."""
     args = parse_args()
 
-    # Load or create config
     if args.config is not None:
-        print(f"Loading configuration from {args.config}")
         config = TrainingConfig.load(args.config)
     else:
-        # Create config from command-line arguments
         config = TrainingConfig(
             model_type=args.model,
             data_dir=args.data_dir,
@@ -287,15 +96,12 @@ def main():
             seed=args.seed,
         )
 
-    # Print configuration
     if config.verbose:
         print("\n" + "="*80)
         print("ROMAIN - Gravitational Wave Sky Localization")
         print("="*80)
         print(config)
-        print("="*80 + "\n")
 
-    # Set random seeds
     torch.manual_seed(config.seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed(config.seed)
@@ -305,18 +111,14 @@ def main():
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
 
-    # Create output directory
     output_path = Path(config.output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
 
-    # Save configuration
     config.save(output_path / 'config.json')
 
-    # Create data loaders
     if config.verbose:
         print("Creating data loaders...")
 
-    # Check if using HDF5 or .npy files
     use_hdf5 = hasattr(args, 'hdf5_path') and args.hdf5_path is not None
     in_memory = hasattr(args, 'in_memory') and args.in_memory
 
@@ -326,46 +128,24 @@ def main():
             if in_memory:
                 print("  Loading entire dataset into RAM...")
 
-        train_loader, val_loader, test_loader = create_hdf5_dataloaders(
-            hdf5_path=args.hdf5_path,
-            batch_size=config.batch_size,
-            train_frac=config.train_frac,
-            val_frac=config.val_frac,
-            test_frac=config.test_frac,
-            num_workers=config.num_workers,
-            pin_memory=config.pin_memory,
-            seed=config.seed,
-            in_memory=in_memory,
-            verbose=config.verbose,
-        )
+        train_loader, val_loader, test_loader = create_hdf5_dataloaders(hdf5_path=args.hdf5_path, batch_size=config.batch_size, train_frac=config.train_frac,
+                                                                        val_frac=config.val_frac, test_frac=config.test_frac, num_workers=config.num_workers, 
+                                                                        pin_memory=config.pin_memory, seed=config.seed, in_memory=in_memory, verbose=config.verbose)
     else:
         if config.verbose:
             print(f"  Loading from .npy files: {config.data_dir}")
 
-        train_loader, val_loader, test_loader = create_dataloaders(
-            data_dir=config.data_dir,
-            batch_size=config.batch_size,
-            target_length=config.target_length,
-            bandpass=(config.bandpass_low, config.bandpass_high),
-            normalize=config.normalize,
-            use_healpix=True,
-            healpix_nside=config.healpix_nside,
-            train_frac=config.train_frac,
-            val_frac=config.val_frac,
-            test_frac=config.test_frac,
-            max_events=config.max_events,
-            num_workers=config.num_workers,
-            cache_train=config.cache_train,
-            seed=config.seed,
-            verbose=config.verbose,
-        )
+        train_loader, val_loader, test_loader = create_dataloaders(data_dir=config.data_dir, batch_size=config.batch_size, target_length=config.target_length, 
+                                                                   bandpass=(config.bandpass_low, config.bandpass_high), normalize=config.normalize, use_healpix=True,
+                                                                   healpix_nside=config.healpix_nside, train_frac=config.train_frac, val_frac=config.val_frac, 
+                                                                   test_frac=config.test_frac, max_events=config.max_events, num_workers=config.num_workers, 
+                                                                   cache_train=config.cache_train, seed=config.seed, verbose=config.verbose)
 
     if config.verbose and not use_hdf5:
         print(f"  Train: {len(train_loader.dataset)} events ({len(train_loader)} batches)")
         print(f"  Val:   {len(val_loader.dataset)} events ({len(val_loader)} batches)")
         print(f"  Test:  {len(test_loader.dataset)} events ({len(test_loader)} batches)")
 
-    # Create model
     if config.verbose:
         print(f"\nCreating {config.model_type} model...")
 
@@ -377,7 +157,6 @@ def main():
         print(f"  Total parameters: {n_params:,}")
         print(f"  Trainable parameters: {n_trainable:,}")
 
-    # Resume from checkpoint if specified
     start_epoch = 0
     if args.resume is not None:
         if config.verbose:
@@ -390,21 +169,12 @@ def main():
         if config.verbose:
             print(f"  Resuming from epoch {start_epoch}")
 
-    # Create trainer
-    trainer = Trainer(
-        model=model,
-        train_loader=train_loader,
-        val_loader=val_loader,
-        test_loader=test_loader,
-        config=config,
-    )
+    trainer = Trainer(model=model, train_loader=train_loader, val_loader=val_loader, test_loader=test_loader, config=config)
 
-    # Load optimizer state if resuming
     if args.resume is not None and 'optimizer_state_dict' in checkpoint:
         trainer.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         trainer.current_epoch = start_epoch
 
-    # Train
     if config.verbose:
         print("\n" + "="*80)
         print("Starting Training")
@@ -412,7 +182,6 @@ def main():
 
     results = trainer.train()
 
-    # Save results
     if config.verbose:
         print("\n" + "="*80)
         print("Training Complete")
@@ -423,12 +192,7 @@ def main():
         for key, val in results['final_metrics'].items():
             print(f"  {key}: {val:.6f}")
 
-    # Save training history
-    save_results(
-        results,
-        output_path,
-        prefix='training_results'
-    )
+    save_results(results, output_path, prefix='training_results')
 
     if config.verbose:
         print(f"\nResults saved to {output_path}")

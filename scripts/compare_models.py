@@ -1,9 +1,4 @@
 #!/usr/bin/env python3
-"""
-Comparative analysis of all 4 Romain model types.
-
-Loads evaluation results and creates comparison visualizations and statistics.
-"""
 
 import argparse
 import sys
@@ -14,9 +9,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from typing import Dict, List
 
-def load_results(results_dir: Path) -> Dict:
-    """Load evaluation results for all models."""
-
+def load_results(results_dir):
     results = {}
 
     model_types = ['regressor', 'classifier', 'multitask', 'probmap']
@@ -80,9 +73,7 @@ def load_results(results_dir: Path) -> Dict:
 
     return results
 
-
-def compute_statistics(results: Dict) -> Dict:
-    """Compute summary statistics for all models."""
+def compute_statistics(results):
     stats = {}
 
     for model_type, data in results.items():
@@ -119,9 +110,7 @@ def compute_statistics(results: Dict) -> Dict:
 
     return stats
 
-
-def plot_error_comparison(results: Dict, output_path: Path):
-    """Compare angular error distributions."""
+def plot_error_comparison(results, output_path):
     fig, axes = plt.subplots(2, 2, figsize=(16, 12))
     axes = axes.flatten()
 
@@ -170,9 +159,7 @@ def plot_error_comparison(results: Dict, output_path: Path):
 
     print(f"  Saved: {output_path.name}")
 
-
-def plot_cumulative_comparison(results: Dict, output_path: Path):
-    """Compare cumulative distribution functions."""
+def plot_cumulative_comparison(results, output_path):
     fig, ax = plt.subplots(figsize=(12, 8))
 
     model_names = {
@@ -219,9 +206,7 @@ def plot_cumulative_comparison(results: Dict, output_path: Path):
 
     print(f"  Saved: {output_path.name}")
 
-
-def plot_percentile_comparison(stats: Dict, output_path: Path):
-    """Bar plot comparing key percentiles."""
+def plot_percentile_comparison(stats, output_path):
     fig, ax = plt.subplots(figsize=(14, 8))
 
     model_names = ['Regressor', 'Classifier', 'MultiTask', 'ProbabilityMap']
@@ -255,9 +240,7 @@ def plot_percentile_comparison(stats: Dict, output_path: Path):
 
     print(f"  Saved: {output_path.name}")
 
-
-def print_comparison_table(stats: Dict):
-    """Print formatted comparison table."""
+def print_comparison_table(stats):
     print("\n" + "="*100)
     print("MODEL COMPARISON - ANGULAR ERROR STATISTICS")
     print("="*100)
@@ -303,45 +286,24 @@ def print_comparison_table(stats: Dict):
 
     print("="*100)
 
-
 def main():
     parser = argparse.ArgumentParser(description='Compare all Romain models')
-    parser.add_argument('--results-dir', type=str, default='results',
-                       help='Results directory containing all model training runs')
-    parser.add_argument('--output-dir', type=str, default='results/model_comparison',
-                       help='Output directory for comparison results')
+    parser.add_argument('--results-dir', type=str, default='results', help='Results directory containing all model training runs')
+    parser.add_argument('--output-dir', type=str, default='results/model_comparison', help='Output directory for comparison results')
     args = parser.parse_args()
 
     results_dir = Path(args.results_dir)
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    print("="*100)
-    print("ROMAIN MODEL COMPARISON")
-    print("="*100)
-    print(f"Results directory: {results_dir}")
-    print(f"Output directory: {output_dir}")
-    print()
-
-    print("Loading evaluation results...")
     results = load_results(results_dir)
 
     if not results:
         print("ERROR: No results found!")
         sys.exit(1)
 
-    print(f"  Found results for {len(results)} models: {list(results.keys())}")
-    print()
-
-    print("Computing statistics...")
     stats = compute_statistics(results)
-    print()
-
     print_comparison_table(stats)
-    print()
-
-    print("Generating comparison visualizations...")
-
     plot_error_comparison(results, output_dir / 'error_distributions.pdf')
     plot_cumulative_comparison(results, output_dir / 'cumulative_comparison.pdf')
     plot_percentile_comparison(stats, output_dir / 'percentile_comparison.pdf')
@@ -361,20 +323,6 @@ def main():
                     f.write(f"  {key}: {value}\n")
 
     print(f"  Saved: {stats_file.name}")
-    print()
-
-    print("="*100)
-    print("COMPARISON COMPLETE!")
-    print("="*100)
-    print(f"\nResults saved to: {output_dir}")
-    print()
-    print("Files generated:")
-    print(f"  - error_distributions.pdf: Individual error histograms")
-    print(f"  - cumulative_comparison.pdf: CDF comparison")
-    print(f"  - percentile_comparison.pdf: Bar chart comparison")
-    print(f"  - comparison_statistics.txt: Detailed statistics")
-    print("="*100)
-
 
 if __name__ == '__main__':
     main()
