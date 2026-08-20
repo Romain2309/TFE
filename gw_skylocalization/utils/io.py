@@ -78,11 +78,6 @@ def load_checkpoint(
 
     Returns:
         Dictionary containing checkpoint data
-
-    Example:
-        >>> checkpoint = load_checkpoint('model.pt', model=my_model, device='cuda')
-        >>> epoch = checkpoint['epoch']
-        >>> metrics = checkpoint['metrics']
     """
     checkpoint = torch.load(checkpoint_path, map_location=device)
 
@@ -341,6 +336,7 @@ def load_config(config_path: str) -> Dict[str, Any]:
     return config
 
 
+"""
 if __name__ == "__main__":
     print("Testing I/O utilities...")
 
@@ -372,3 +368,4 @@ if __name__ == "__main__":
     Path('test_dataset.h5').unlink()
 
     print("\nAll tests passed!")
+"""

@@ -1,10 +1,5 @@
 """
 Neural network backbones for processing GW strain data and physics features.
-
-Provides:
-- StrainCNN: 1D CNN for raw strain time series
-- PhysicsMLP: MLP for auxiliary physics features
-- HybridBackbone: Fusion of both streams
 """
 
 import torch
@@ -15,19 +10,14 @@ from typing import Optional, Tuple
 class StrainCNN(nn.Module):
     """
     1D CNN for extracting features from strain time series.
-
-    Architecture designed for moderate-length signals (~2048-4096 samples at 1024 Hz).
-    Uses aggressive striding to reduce sequence length while preserving temporal structure.
-
-    Adapted from Maxime's SkyLocalizationCNN.
     """
 
     def __init__(
         self,
-        in_channels: int = 3,  # H1, L1, V1
+        in_channels: int = 3,
         base_filters: int = 32,
         output_dim: int = 256,
-        input_length: int = 2048,  # Expected input sequence length
+        input_length: int = 2048,
     ):
         super().__init__()
 
@@ -51,10 +41,10 @@ class StrainCNN(nn.Module):
             nn.BatchNorm1d(base_filters * 8),
             nn.ReLU(inplace=True),
 
-            nn.AdaptiveAvgPool1d(8),  # (N, 256, 8)
+            nn.AdaptiveAvgPool1d(8),
         )
 
-        self.flatten_dim = base_filters * 8 * 8  # 256 * 8 = 2048
+        self.flatten_dim = base_filters * 8 * 8
 
         self.fc = nn.Sequential(
             nn.Linear(self.flatten_dim, output_dim),
@@ -88,13 +78,11 @@ class PhysicsMLP(nn.Module):
 
     Takes 6D feature vector:
         [tau_HL, tau_HV, A_HL, A_HV, phi_HL, phi_HV]
-
-    Adapted from Maxime's AuxiliaryMLP.
     """
 
     def __init__(
         self,
-        in_features: int = 6,  # tau_HL, tau_HV, A_HL, A_HV, phi_HL, phi_HV
+        in_features: int = 6,
         hidden_dim: int = 64,
         output_dim: int = 32,
     ):
@@ -114,8 +102,6 @@ class PhysicsMLP(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        Forward pass.
-
         Args:
             x: Auxiliary features of shape (batch, in_features)
 
@@ -130,11 +116,6 @@ class PhysicsMLP(nn.Module):
 
 class HybridBackbone(nn.Module):
     """
-    Hybrid backbone combining strain CNN and physics MLP.
-
-    This is the key innovation: combining end-to-end learning from raw data
-    with explicit physics features.
-
     Architecture:
         - StrainCNN: 3 strains → 256D embedding
         - PhysicsMLP: 6 features → 32D embedding
@@ -151,10 +132,10 @@ class HybridBackbone(nn.Module):
     ):
         """
         Args:
-            use_physics_features: If False, only use strain CNN (for ablation)
+            use_physics_features: If False, only use strain CNN
             strain_feature_dim: Dimensionality of strain features
             physics_feature_dim: Dimensionality of physics features
-            n_physics_features: Number of input physics features (6)
+            n_physics_features: Number of input physics features
             input_length: Expected strain sequence length
         """
         super().__init__()
@@ -183,19 +164,12 @@ class HybridBackbone(nn.Module):
         physics_features: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         """
-        Forward pass.
-
         Args:
             strain: Strain tensor of shape (batch, 3, seq_len)
             physics_features: Physics features of shape (batch, 6) (optional)
 
         Returns:
             Combined features of shape (batch, output_dim)
-
-        Note:
-            If use_physics_features=True but physics_features is None,
-            raises an error. If use_physics_features=False, physics_features
-            is ignored even if provided.
         """
         strain_feat = self.strain_cnn(strain)
 
@@ -210,6 +184,7 @@ class HybridBackbone(nn.Module):
             return strain_feat
 
 
+"""
 if __name__ == "__main__":
     print("Testing backbone networks...")
 
@@ -246,3 +221,4 @@ if __name__ == "__main__":
     print(f"\n5. HybridBackbone total parameters: {total_params:,}")
 
     print("\nAll tests passed!")
+"""

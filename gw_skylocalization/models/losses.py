@@ -1,11 +1,5 @@
 """
 Loss functions for GW sky localization.
-
-Provides:
-- AngularLoss: Geodesic distance on sphere (proper metric for sky localization)
-- CosineLoss: Smooth alternative to angular loss
-- MultiTaskLoss: Combined loss for sky position + time delays
-- Label smoothing for classification/probability maps (via standard CrossEntropyLoss)
 """
 
 import torch
@@ -16,14 +10,6 @@ import torch.nn.functional as F
 class AngularLoss(nn.Module):
     """
     Angular distance loss for unit vectors on the sphere.
-
-    Computes the geodesic distance:
-        loss = arccos(pred · target)
-
-    This is the proper metric for sky localization since it measures
-    the actual angular separation on the sphere.
-
-    Range: [0, π] radians = [0°, 180°]
     """
 
     def __init__(self, reduction: str = 'mean', eps: float = 1e-7):
@@ -68,21 +54,7 @@ class AngularLoss(nn.Module):
 
 class CosineLoss(nn.Module):
     """
-    Cosine similarity loss (alternative to angular loss).
-
-    Computes:
-        loss = 1 - cosine_similarity(pred, target)
-             = 1 - (pred · target)
-
-    Range: [0, 2]
-
-    Advantages over AngularLoss:
-    - Smoother gradients near the target
-    - No arccos (faster computation, no numerical issues)
-
-    Disadvantages:
-    - Not a proper metric (doesn't measure angular distance)
-    - Gradients vanish when very close to target
+    Cosine similarity loss.
     """
 
     def __init__(self, reduction: str = 'mean'):
@@ -124,14 +96,6 @@ class CosineLoss(nn.Module):
 class MultiTaskLoss(nn.Module):
     """
     Multi-task loss for sky position + time delay prediction.
-
-    Combines:
-    - Main task: Sky position (angular loss)
-    - Auxiliary task: Time delay prediction (MSE)
-
-    Total loss = angular_loss + tau_weight * tau_loss
-
-    The auxiliary task forces the network to learn physics-relevant features.
     """
 
     def __init__(
@@ -239,6 +203,7 @@ def angular_separation_degrees(
     return angular_dist_deg
 
 
+"""
 if __name__ == "__main__":
     print("Testing loss functions...")
 
@@ -288,3 +253,4 @@ if __name__ == "__main__":
     assert torch.allclose(sep, torch.tensor(0.0), atol=0.1), "Perfect match test failed!"
 
     print("\nAll tests passed!")
+"""

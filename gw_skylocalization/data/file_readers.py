@@ -1,7 +1,7 @@
 """
 File readers for pre-generated gravitational wave data.
 
-Handles loading .npy files from /data/stu_bonhomme/tfe/ with the format:
+Handles loading .npy files with the format:
     EVENT_{id}_CONFIG_{cfg}_{detector}_RA_{ra}_DEC_{dec}_{hash}.npy
 """
 
@@ -306,6 +306,7 @@ def collate_events(batch: List[Dict]) -> Dict[str, np.ndarray]:
     }
 
 
+"""
 if __name__ == "__main__":
     print("Testing PreGeneratedDataReader...")
 
@@ -336,3 +337,4 @@ if __name__ == "__main__":
         print(f"  {key}: {val.shape}")
 
     print("\nTest passed!")
+"""

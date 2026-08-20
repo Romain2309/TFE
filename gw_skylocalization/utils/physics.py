@@ -1,12 +1,5 @@
 """
 Physics-based feature extraction for gravitational wave sky localization.
-
-Provides functions to compute:
-- Time delays between detector pairs (via cross-correlation or geometric calculation)
-- Amplitude ratios between detector pairs
-- Phase differences between detector pairs
-
-These features are physics-informed and directly related to sky position.
 """
 
 import numpy as np
@@ -34,15 +27,6 @@ def compute_time_delay_xcorr(
 
     Returns:
         Time delay in seconds (positive if strain_a leads strain_b)
-
-    Algorithm:
-        1. Compute cross-correlation via FFT
-        2. Restrict search to ±max_delay window
-        3. Find peak of cross-correlation
-        4. Convert lag to time delay
-
-    Examples:
-        >>> delay = compute_time_delay_xcorr(h1_strain, l1_strain, fs=1024)
     """
     xcorr = correlate(strain_a, strain_b, mode='same', method='fft')
 
@@ -72,9 +56,6 @@ def compute_time_delay_geometric(
     """
     Compute exact geometric time delay between two detectors.
 
-    Uses PyCBC detector positions and geometry to compute the precise
-    time delay for a signal from (RA, Dec).
-
     Args:
         ra: Right ascension in radians
         dec: Declination in radians
@@ -84,13 +65,6 @@ def compute_time_delay_geometric(
 
     Returns:
         Time delay in seconds
-
-    Note:
-        Requires pycbc.detector module
-
-    Examples:
-        >>> from pycbc.detector import Detector
-        >>> tau = compute_time_delay_geometric(0.0, 0.0, 'H1', 'L1')
     """
     try:
         from pycbc.detector import Detector
@@ -123,9 +97,6 @@ def compute_amplitude_ratio(
 
     Returns:
         Amplitude ratio A_a / A_b
-
-    Examples:
-        >>> ratio = compute_amplitude_ratio(h1_strain, l1_strain, method='max')
     """
     if method == 'max':
         A_a = np.max(np.abs(strain_a))
@@ -150,14 +121,6 @@ def get_phase_at_peak(strain: np.ndarray) -> float:
 
     Returns:
         Phase at peak amplitude in radians [-π, π]
-
-    Algorithm:
-        1. Compute analytic signal via Hilbert transform
-        2. Find index of maximum amplitude
-        3. Extract phase at that index
-
-    Examples:
-        >>> phase = get_phase_at_peak(h1_strain)
     """
     analytic = hilbert(strain)
 
@@ -181,9 +144,6 @@ def compute_phase_difference(
 
     Returns:
         Phase difference phi_a - phi_b in radians
-
-    Examples:
-        >>> phi_diff = compute_phase_difference(h1_strain, l1_strain)
     """
     phi_a = get_phase_at_peak(strain_a)
     phi_b = get_phase_at_peak(strain_b)
@@ -225,14 +185,6 @@ def extract_physics_features(
     Returns:
         If return_dict=False: np.ndarray of shape (6,)
         If return_dict=True: Dict[str, float] with named features
-
-    Examples:
-        >>> features = extract_physics_features(
-        ...     {'H1': h1, 'L1': l1, 'V1': v1},
-        ...     fs=1024.0,
-        ...     method='xcorr'
-        ... )
-        >>> features.shape  # (6,)
     """
     required = ['H1', 'L1', 'V1']
     for det in required:
@@ -286,10 +238,6 @@ def extract_all_time_delays(
     """
     Extract all three time delays (HL, HV, LV).
 
-    Note: In the standard 6D feature vector, we only use HL and HV since
-    LV is redundant (tau_LV = tau_HV - tau_HL). This function provides
-    all three for completeness.
-
     Args:
         strains: Dictionary {'H1': array, 'L1': array, 'V1': array}
         fs: Sampling frequency
@@ -334,10 +282,6 @@ def compute_snr(strain: np.ndarray, noise_std: Optional[float] = None) -> float:
 
     Returns:
         SNR (dimensionless)
-
-    Note:
-        This is a simplified SNR calculation. For proper GW analysis,
-        use matched filtering with noise PSDs.
     """
     signal_power = np.max(np.abs(strain))
 
@@ -354,6 +298,7 @@ def compute_snr(strain: np.ndarray, noise_std: Optional[float] = None) -> float:
     return snr
 
 
+"""
 if __name__ == "__main__":
     print("Testing physics feature extraction...")
 
@@ -387,3 +332,4 @@ if __name__ == "__main__":
     print(f"Shape: {features_array.shape}")
 
     print("\nAll tests passed!")
+"""

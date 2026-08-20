@@ -1,12 +1,5 @@
 """
 Unified training loop for all model types.
-
-Handles:
-- Training and validation
-- Metric computation
-- Progress tracking
-- TensorBoard logging
-- Checkpointing and early stopping
 """
 
 import torch
@@ -41,8 +34,6 @@ from ..utils.coordinates import get_healpix_npix
 class Trainer:
     """
     Unified trainer for all 4 model types.
-
-    Automatically adapts to model type (classifier, regressor, multitask, probmap).
     """
 
     def __init__(
@@ -420,6 +411,8 @@ class Trainer:
         }
 
 
+"""
 if __name__ == "__main__":
     print("Trainer module loaded successfully!")
     print("Use this in conjunction with scripts/train.py for actual training.")
+"""

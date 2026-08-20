@@ -1,11 +1,5 @@
 """
 Task-specific prediction heads for GW sky localization.
-
-Provides:
-- RegressionHead: Unit vector (x, y, z) prediction
-- ClassificationHead: HEALPix pixel classification
-- ProbabilityHead: HEALPix probability distribution
-- MultiTaskHead: Combined sky position + time delay prediction
 """
 
 import torch
@@ -17,8 +11,6 @@ from typing import Tuple
 class RegressionHead(nn.Module):
     """
     Regression head for predicting unit vector (x, y, z) on sphere.
-
-    Outputs are normalized to unit length to ensure valid sky positions.
     """
 
     def __init__(
@@ -39,8 +31,6 @@ class RegressionHead(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        Forward pass.
-
         Args:
             x: Features of shape (batch, in_features)
 
@@ -57,8 +47,6 @@ class RegressionHead(nn.Module):
 class ClassificationHead(nn.Module):
     """
     Classification head for HEALPix pixel prediction.
-
-    Treats sky localization as discrete classification into HEALPix pixels.
     """
 
     def __init__(
@@ -80,8 +68,6 @@ class ClassificationHead(nn.Module):
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
-        Forward pass.
-
         Args:
             x: Features of shape (batch, in_features)
 
@@ -95,11 +81,6 @@ class ClassificationHead(nn.Module):
 class ProbabilityHead(nn.Module):
     """
     Probability head for HEALPix probability distribution.
-
-    Outputs a full probability distribution over the sky, enabling:
-    - Uncertainty quantification
-    - Credible region estimation
-    - Bimodality detection (mirror degeneracy)
     """
 
     def __init__(
@@ -123,8 +104,6 @@ class ProbabilityHead(nn.Module):
 
     def forward(self, x: torch.Tensor, return_probs: bool = False) -> torch.Tensor:
         """
-        Forward pass.
-
         Args:
             x: Features of shape (batch, in_features)
             return_probs: If True, return probabilities; if False, return logits
@@ -145,11 +124,6 @@ class ProbabilityHead(nn.Module):
 class MultiTaskHead(nn.Module):
     """
     Multi-task head for sky position + time delay prediction.
-
-    Auxiliary task: Predict time delays (tau_HL, tau_HV) to enforce learning
-    of physics-relevant features.
-
-    Main task: Predict unit vector sky position.
     """
 
     def __init__(
@@ -180,8 +154,6 @@ class MultiTaskHead(nn.Module):
 
     def forward(self, x: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
         """
-        Forward pass.
-
         Args:
             x: Features of shape (batch, in_features)
 
@@ -199,6 +171,7 @@ class MultiTaskHead(nn.Module):
         return xyz, tau
 
 
+"""
 if __name__ == "__main__":
     print("Testing prediction heads...")
 
@@ -254,3 +227,4 @@ if __name__ == "__main__":
     print(f"   MultiTaskHead: {sum(p.numel() for p in multitask_head.parameters()):,}")
 
     print("\nAll tests passed!")
+"""

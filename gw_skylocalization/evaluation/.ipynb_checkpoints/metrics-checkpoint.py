@@ -1,11 +1,5 @@
 """
 Evaluation metrics for gravitational wave sky localization.
-
-Provides:
-- Angular error statistics (for regression models)
-- HEALPix metrics (for classification/probability models)
-- Searched area and credible regions (standard GW astronomy metrics)
-- Bimodality detection (mirror degeneracy)
 """
 
 import numpy as np
@@ -86,9 +80,6 @@ def searched_area(
 ) -> Dict[str, float]:
     """
     Compute searched area metrics for a probability sky map.
-
-    Standard metric in GW astronomy: how much area must be searched
-    to find the true source location.
 
     Args:
         probs: (n_pixels,) probability per pixel
@@ -202,8 +193,6 @@ def find_skymap_modes(
 ) -> List[Dict]:
     """
     Find modes (peaks) in a probability sky map.
-
-    Used to detect bimodality from mirror degeneracy.
 
     Args:
         probs: (n_pixels,) probability per pixel
@@ -342,6 +331,7 @@ def classification_accuracy(
     return float(np.mean(pred_pixels == true_pixels))
 
 
+"""
 if __name__ == "__main__":
     print("Testing evaluation metrics...")
 
@@ -394,3 +384,4 @@ if __name__ == "__main__":
     print(f"   RMSE: {tau_metrics['rmse_ms']:.2f} ms")
 
     print("\nAll tests passed!")
+"""

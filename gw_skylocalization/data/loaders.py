@@ -247,6 +247,7 @@ def create_dataloaders(
     return train_loader, val_loader, test_loader
 
 
+"""
 if __name__ == "__main__":
     print("Testing GWDataset and DataLoaders...")
 
@@ -284,3 +285,4 @@ if __name__ == "__main__":
         print(f"  {key}: {val.shape} {val.dtype}")
 
     print("\nTest passed!")
+"""

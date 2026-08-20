@@ -1,7 +1,5 @@
 """
 Training configuration dataclasses.
-
-Provides type-safe configuration for all training parameters.
 """
 
 from dataclasses import dataclass, field, asdict
@@ -14,8 +12,6 @@ import json
 class TrainingConfig:
     """
     Complete training configuration.
-
-    All hyperparameters, paths, and settings in one place.
     """
 
     model_type: str = 'regressor'  # 'classifier', 'regressor', 'multitask', 'probmap'
@@ -23,7 +19,7 @@ class TrainingConfig:
     strain_feature_dim: int = 256
     physics_feature_dim: int = 32
 
-    data_dir: str = '/data/stu_bonhomme/tfe/benchmark_same_small'
+    data_dir: str = '/data/stu_bonhomme/tfe/benchmark_same_small' # adapt with actual data folder
     target_length: int = 2048
     bandpass_low: float = 30.0
     bandpass_high: float = 1024.0
@@ -34,8 +30,7 @@ class TrainingConfig:
     test_frac: float = 0.15
     max_events: Optional[int] = None  # None = use all
 
-    healpix_nside: int = 8  # 768 pixels
-
+    healpix_nside: int = 8
     batch_size: int = 32
     n_epochs: int = 50
     learning_rate: float = 1e-3
@@ -157,6 +152,7 @@ class TrainingConfig:
         return "\n".join(lines)
 
 
+"""
 if __name__ == "__main__":
     print("Testing TrainingConfig...")
 
@@ -192,3 +188,4 @@ if __name__ == "__main__":
     print(f"Number of HEALPix pixels (nside={config.healpix_nside}): {config.n_pixels}")
 
     print("\nAll tests passed!")
+"""

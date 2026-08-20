@@ -82,7 +82,6 @@ class HDF5Dataset(Dataset):
             indices: Indices to compute stats from (e.g., training set only)
                     If None, uses all events
         """
-        print("Computing normalization statistics...")
 
         if self.in_memory:
             if indices is None:
@@ -120,8 +119,6 @@ class HDF5Dataset(Dataset):
                 physics_sq_sum = np.zeros(n_physics, dtype=np.float64)
                 physics_count = 0
 
-                print(f"  Processing {n_samples} samples in batches of {batch_size}...")
-
                 for i in range(0, n_samples, batch_size):
                     batch_idx = sorted_indices[i:i+batch_size].tolist()
 
@@ -136,9 +133,6 @@ class HDF5Dataset(Dataset):
                     physics_sq_sum += (batch_physics ** 2).sum(axis=0)
                     physics_count += batch_physics.shape[0]
 
-                    if (i // batch_size) % 5 == 0:
-                        print(f"    Processed {i + len(batch_idx)}/{n_samples} samples...")
-
                 self.strain_mean = (strain_sum / strain_count).astype(np.float32)
                 self.strain_std = np.sqrt(strain_sq_sum / strain_count - self.strain_mean ** 2).astype(np.float32)
 
@@ -149,7 +143,6 @@ class HDF5Dataset(Dataset):
         print(f"  Strain std: {self.strain_std.flatten()}")
         print(f"  Physics mean: {self.physics_mean}")
         print(f"  Physics std: {self.physics_std}")
-        print("✅ Normalization statistics computed!")
 
     def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
         """
@@ -295,6 +288,7 @@ def create_hdf5_dataloaders(
     return train_loader, val_loader, test_loader
 
 
+"""
 if __name__ == '__main__':
     import sys
     if len(sys.argv) > 1:
@@ -312,5 +306,4 @@ if __name__ == '__main__':
     print(f"  Physics shape: {sample['physics_features'].shape}")
     print(f"  XYZ shape: {sample['xyz'].shape}")
     print(f"  HEALPix label: {sample['healpix_label']}")
-
-    print("\n✅ HDF5Dataset working!")
+"""

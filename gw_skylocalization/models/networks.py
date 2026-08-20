@@ -1,13 +1,5 @@
 """
 Complete neural network architectures for GW sky localization.
-
-Provides 4 model types:
-1. SkyClassifier - HEALPix pixel classification
-2. SkyRegressor - Unit vector regression
-3. SkyMultiTask - Sky position + time delay prediction
-4. SkyProbabilityMap - Probability distribution over sky
-
-All models use the hybrid CNN+MLP backbone.
 """
 
 import torch
@@ -27,9 +19,6 @@ from .heads import (
 class SkyClassifier(nn.Module):
     """
     Sky localization as HEALPix pixel classification.
-
-    Treats the problem as classification into discrete sky pixels.
-    Good baseline, interpretable sky regions.
     """
 
     def __init__(
@@ -47,7 +36,7 @@ class SkyClassifier(nn.Module):
             use_physics_features: If True, use hybrid backbone; else strain-only
             strain_feature_dim: Dimensionality of strain features
             physics_feature_dim: Dimensionality of physics features
-            n_physics_features: Number of input physics features (6)
+            n_physics_features: Number of input physics features
             input_length: Expected strain sequence length
         """
         super().__init__()
@@ -74,8 +63,6 @@ class SkyClassifier(nn.Module):
         physics_features: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         """
-        Forward pass.
-
         Args:
             strain: Strain tensor of shape (batch, 3, seq_len)
             physics_features: Physics features of shape (batch, 6) (optional)
@@ -93,9 +80,6 @@ class SkyClassifier(nn.Module):
 class SkyRegressor(nn.Module):
     """
     Sky localization as unit vector regression.
-
-    Predicts (x, y, z) unit vector on the sphere.
-    Best for single point estimates with highest accuracy.
     """
 
     def __init__(
@@ -136,8 +120,6 @@ class SkyRegressor(nn.Module):
         physics_features: Optional[torch.Tensor] = None,
     ) -> torch.Tensor:
         """
-        Forward pass.
-
         Args:
             strain: Strain tensor of shape (batch, 3, seq_len)
             physics_features: Physics features of shape (batch, 6) (optional)
@@ -155,11 +137,6 @@ class SkyRegressor(nn.Module):
 class SkyMultiTask(nn.Module):
     """
     Multi-task learning: sky position + time delay prediction.
-
-    Auxiliary task: Predict time delays (tau_HL, tau_HV)
-    Main task: Predict unit vector sky position
-
-    The auxiliary task enforces learning of physics-relevant features.
     """
 
     def __init__(
@@ -200,8 +177,6 @@ class SkyMultiTask(nn.Module):
         physics_features: Optional[torch.Tensor] = None,
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
-        Forward pass.
-
         Args:
             strain: Strain tensor of shape (batch, 3, seq_len)
             physics_features: Physics features of shape (batch, 6) (optional)
@@ -220,12 +195,6 @@ class SkyMultiTask(nn.Module):
 class SkyProbabilityMap(nn.Module):
     """
     Sky localization as probability distribution over HEALPix pixels.
-
-    Outputs full probability map for uncertainty quantification.
-    Enables:
-    - Credible region estimation
-    - Bimodality detection (mirror degeneracy)
-    - Matches LIGO/Virgo sky map format
     """
 
     def __init__(
@@ -271,8 +240,6 @@ class SkyProbabilityMap(nn.Module):
         return_probs: bool = False,
     ) -> torch.Tensor:
         """
-        Forward pass.
-
         Args:
             strain: Strain tensor of shape (batch, 3, seq_len)
             physics_features: Physics features of shape (batch, 6) (optional)
@@ -290,6 +257,7 @@ class SkyProbabilityMap(nn.Module):
         return output
 
 
+"""
 if __name__ == "__main__":
     print("Testing complete neural network models...")
 
@@ -349,3 +317,4 @@ if __name__ == "__main__":
     print(f"   SkyProbabilityMap: {sum(p.numel() for p in probmap.parameters()):,}")
 
     print("\nAll tests passed!")
+"""

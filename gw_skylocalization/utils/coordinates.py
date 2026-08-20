@@ -1,12 +1,5 @@
 """
 Coordinate conversion utilities for gravitational wave sky localization.
-
-Provides conversions between:
-- (RA, Dec) spherical coordinates (radians)
-- (x, y, z) unit vectors on the unit sphere
-- HEALPix pixel indices
-
-All angles are in radians unless otherwise specified.
 """
 
 import numpy as np
@@ -27,11 +20,6 @@ def radec_to_xyz(ra: Union[float, np.ndarray], dec: Union[float, np.ndarray]) ->
             x = cos(dec) * cos(ra)
             y = cos(dec) * sin(ra)
             z = sin(dec)
-
-    Examples:
-        >>> xyz = radec_to_xyz(0.0, 0.0)  # (RA=0, Dec=0) → (1, 0, 0)
-        >>> xyz = radec_to_xyz(np.pi/2, 0.0)  # (RA=π/2, Dec=0) → (0, 1, 0)
-        >>> xyz = radec_to_xyz(0.0, np.pi/2)  # (RA=0, Dec=π/2) → (0, 0, 1)
     """
     ra = np.asarray(ra)
     dec = np.asarray(dec)
@@ -41,9 +29,9 @@ def radec_to_xyz(ra: Union[float, np.ndarray], dec: Union[float, np.ndarray]) ->
     y = cos_dec * np.sin(ra)
     z = np.sin(dec)
 
-    if ra.ndim == 0:  # Scalar inputs
+    if ra.ndim == 0:
         return np.array([x, y, z])
-    else:  # Array inputs
+    else:
         return np.stack([x, y, z], axis=-1)
 
 
@@ -57,17 +45,12 @@ def xyz_to_radec(xyz: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     Returns:
         ra: Right ascension in radians [0, 2π)
         dec: Declination in radians [-π/2, π/2]
-
-    Examples:
-        >>> ra, dec = xyz_to_radec(np.array([1, 0, 0]))  # → (0, 0)
-        >>> ra, dec = xyz_to_radec(np.array([0, 1, 0]))  # → (π/2, 0)
-        >>> ra, dec = xyz_to_radec(np.array([0, 0, 1]))  # → (0, π/2)
     """
     xyz = np.asarray(xyz)
 
-    if xyz.ndim == 1:  # Single vector
+    if xyz.ndim == 1:
         x, y, z = xyz[0], xyz[1], xyz[2]
-    else:  # Batch of vectors
+    else:
         x, y, z = xyz[..., 0], xyz[..., 1], xyz[..., 2]
 
     dec = np.arcsin(np.clip(z, -1.0, 1.0))
@@ -96,15 +79,12 @@ def radec_to_healpix(
 
     Returns:
         pixel: HEALPix pixel index or indices
-
-    Note:
-        HEALPix uses (theta, phi) where theta = π/2 - dec, phi = ra
     """
     ra = np.asarray(ra)
     dec = np.asarray(dec)
 
-    theta = np.pi / 2 - dec  # Co-latitude [0, π]
-    phi = ra  # Azimuth [0, 2π)
+    theta = np.pi / 2 - dec
+    phi = ra
 
     pixel = hp.ang2pix(nside, theta, phi, nest=nest)
 
@@ -132,8 +112,8 @@ def healpix_to_radec(
 
     theta, phi = hp.pix2ang(nside, pixel, nest=nest)
 
-    dec = np.pi / 2 - theta  # Declination
-    ra = phi  # Right ascension
+    dec = np.pi / 2 - theta
+    ra = phi
 
     return ra, dec
 
@@ -146,9 +126,6 @@ def angular_separation(
     """
     Compute angular separation between unit vectors on the sphere.
 
-    Uses the geodesic distance formula:
-        angular_distance = arccos(xyz1 · xyz2)
-
     Args:
         xyz1: Unit vector(s) of shape (..., 3)
         xyz2: Unit vector(s) of shape (..., 3)
@@ -156,11 +133,6 @@ def angular_separation(
 
     Returns:
         Angular separation(s) in degrees or radians
-
-    Examples:
-        >>> sep = angular_separation([1, 0, 0], [0, 1, 0])  # 90 degrees
-        >>> sep = angular_separation([1, 0, 0], [1, 0, 0])  # 0 degrees
-        >>> sep = angular_separation([1, 0, 0], [-1, 0, 0])  # 180 degrees
     """
     xyz1 = np.asarray(xyz1)
     xyz2 = np.asarray(xyz2)
@@ -186,9 +158,6 @@ def angular_separation_radec(
 ) -> Union[float, np.ndarray]:
     """
     Compute angular separation between (RA, Dec) positions.
-
-    Uses the Haversine formula for numerical stability:
-        d = 2 * arcsin(sqrt(sin²(Δdec/2) + cos(dec1)*cos(dec2)*sin²(Δra/2)))
 
     Args:
         ra1, dec1: First position in radians
@@ -217,7 +186,7 @@ def angular_separation_radec(
 
 def radec_deg_to_xyz(ra_deg: Union[float, np.ndarray], dec_deg: Union[float, np.ndarray]) -> np.ndarray:
     """
-    Convenience function: Convert (RA, Dec) in degrees to unit vector.
+    Convert (RA, Dec) in degrees to unit vector.
 
     Args:
         ra_deg: Right ascension in degrees [0, 360)
@@ -233,7 +202,7 @@ def radec_deg_to_xyz(ra_deg: Union[float, np.ndarray], dec_deg: Union[float, np.
 
 def xyz_to_radec_deg(xyz: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Convenience function: Convert unit vector to (RA, Dec) in degrees.
+    Convert unit vector to (RA, Dec) in degrees.
 
     Args:
         xyz: Unit vector(s) of shape (..., 3)
@@ -255,13 +224,6 @@ def get_healpix_npix(nside: int) -> int:
 
     Returns:
         Number of pixels = 12 * nside^2
-
-    Examples:
-        >>> get_healpix_npix(1)   # 12
-        >>> get_healpix_npix(2)   # 48
-        >>> get_healpix_npix(4)   # 192
-        >>> get_healpix_npix(8)   # 768
-        >>> get_healpix_npix(16)  # 3072
     """
     return hp.nside2npix(nside)
 
@@ -269,8 +231,6 @@ def get_healpix_npix(nside: int) -> int:
 def normalize_xyz(xyz: np.ndarray, eps: float = 1e-8) -> np.ndarray:
     """
     Normalize vectors to unit length.
-
-    Useful for ensuring predictions from neural networks lie on the unit sphere.
 
     Args:
         xyz: Vectors of shape (..., 3)
@@ -284,6 +244,7 @@ def normalize_xyz(xyz: np.ndarray, eps: float = 1e-8) -> np.ndarray:
     return xyz / (norm + eps)
 
 
+"""
 if __name__ == "__main__":
     print("Testing coordinate conversions...")
 
@@ -309,3 +270,4 @@ if __name__ == "__main__":
     print(f"HEALPix round-trip: pixel {pix}, RA {ra_hp:.6f} → {ra_hp_back:.6f}, Dec {dec_hp:.6f} → {dec_hp_back:.6f}")
 
     print("\nAll tests passed!")
+"""

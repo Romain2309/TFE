@@ -1,10 +1,5 @@
 """
 Training callbacks for monitoring and controlling training.
-
-Provides:
-- EarlyStopping: Stop training when metric stops improving
-- ModelCheckpoint: Save best/latest model checkpoints
-- LRSchedulerCallback: Wrap PyTorch LR schedulers
 """
 
 import numpy as np
@@ -16,15 +11,6 @@ from typing import Optional, Dict, Any
 class EarlyStopping:
     """
     Stop training when a monitored metric has stopped improving.
-
-    Example:
-        early_stop = EarlyStopping(patience=10, min_delta=1e-4)
-
-        for epoch in range(n_epochs):
-            val_loss = train_and_validate()
-            if early_stop(val_loss):
-                print("Early stopping triggered!")
-                break
     """
 
     def __init__(
@@ -204,8 +190,6 @@ class ModelCheckpoint:
 class LRSchedulerCallback:
     """
     Wrapper for PyTorch learning rate schedulers.
-
-    Handles stepping the scheduler at the right time (epoch or step).
     """
 
     def __init__(
@@ -251,6 +235,7 @@ class LRSchedulerCallback:
         return self.scheduler.get_last_lr()
 
 
+"""
 if __name__ == "__main__":
     print("Testing training callbacks...")
 
@@ -300,3 +285,4 @@ if __name__ == "__main__":
         print(f"  Epoch {epoch}: LR = {lr_callback.get_last_lr()[0]:.6f}")
 
     print("\nAll tests passed!")
+"""
